@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Processing Lines</title>
+        <script src="https://npmcdn.com/@turf/turf@5.1.6/turf.js"></script>
+        <link rel="stylesheet" href="http://unpkg.com/leaflet@1.0.3/dist/leaflet.css">
+        <script src="http://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+
+        <style>
+                #map {
+                    float: left;
+                    width: 512px;
+                    height: 512px;
+                    border: dashed;
+                }
+
+        </style>
+    </head>
+    <body>
+        <div id="map"></div>
+        <script>
+9
+            //drag and drop
+            var mapEl = document.getElementById("map");
+
+            mapEl.addEventListener("dragenter",function(event){
+                event.preventDefault();
+            });
+
+            mapEl.addEventListener("dragover",function(event){
+                event.preventDefault();
+            });
+
+            mapEl.addEventListener("drop", function(event){
+                event.preventDefault();
+
+                var file = event.dataTransfer.files[0];
+
+                var reader = new FileReader();
+                reader.addEventListener("loadend",function(){
+                    var text = reader.result;
+                    //do something with text data
+                    var textArray = text.split("\n");
+                    
+                    
+                    var features = textArray.map(function(item, idx){
+                        if(idx > 0){
+                            var geoJSONFeature = {
+                            type: "Feature",
+                            geometry: {
+                                type: "Point",
+                                coordinates: [ item.split("#")[2].split(";")[0].substr(4,4).replace(/,/g, '.'),item.split("#")[2].split(";")[1].substr(4,4).replace(/,/g, '.')] // lon,lat order!
+                            },
+                            properties:{    
+                                name: [item.split("#")[1]]
+                            }
+                            }   
+                        }
+                    return geoJSONFeature;
+                    });
+                    
+                    var features_2 = textArray.map(function(item, idx){
+                        if(idx > 0){
+                            var geoJSONFeature = {
+                            type: "Feature",
+                            geometry: {
+                                type: "Point",
+                                coordinates: [ item.split("#")[2].split(";")[1].substr(4,4).replace(/,/g, '.'),item.split("#")[2].split(";")[0].substr(4,4).replace(/,/g, '.')] // lon,lat order!
+                            },
+                            properties:{    
+                                name: [item.split("#")[1]]
+                            }
+                            }   
+                        }
+                    return geoJSONFeature;
+                    });
+
+                    var geoJSON = {
+                        type: "FeatureCollection",
+                        features: features,
+                        };
+                    
+                    var geoJSON_2 = {
+                        type: "FeatureCollection",
+                        features: features_2,
+                        };
+
+
+                    
+                    
+                    /*for(var i = 1 ; i<96; i++){
+                    var buffer_points = features.filter(function(item, idx) {
+                        var inside = turf.inside(item.geometry.coordinates,buffered);
+                        return item.features[i].geometry.coordinates = inside ;
+                    });
+                    };*/
+                    
+                    /*for(var i = 1 ; i<96; i++){
+                        var inside = turf.inside(geoJSON.features[i].geometry.coordinates.reverse(),buffered);
+                        console.log(inside);
+                    };*/
+
+                    for(var i = 1 ; i<96; i++){
+                        var x = geoJSON.features[i].geometry.coordinates
+                        console.log(i);
+                        if(turf.inside(x.reverse(),buffered)){
+                            console.log(x);
+                        var marker = L.marker(x.reverse());
+                        marker.bindPopup(geoJSON.features[i].properties.name[0]).openPopup();
+                        marker.addTo(map)
+                    }
+                    
+                        
+                        };
+                    /*for(var i = 1 ; i<96; i++){
+                        var coordarray = geoJSON.features[i].geometry.coordinates;
+
+                        var deneme= turf.inside(coordarray.reverse(),buffered);
+                        if(deneme=="true"){
+                            var marker = L.marker(coordarray);
+                            marker.addTo(map)
+                        };
+                            //marker.bindPopup(geoJSON.features[i].properties.name[0]).openPopup();
+                    };*/
+
+                    
+
+                    //console.log(for(var i = 0 ; i<96; i++){geoJSON.features[i].geometry.coordinates});
+
+                    /*var marker = L.marker(geoJSON.features[95].geometry.coordinates,{
+                    title : lectureRoom.properties
+                    });
+                    marker.addTo(map);*/
+
+                    });
+                reader.readAsText(file);
+                
+
+            });
+
+            //drawing map
+            var map = L.map('map').setView([48.2,16.4],8);
+
+            var layer = L.tileLayer(
+                'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            );
+            layer.addTo(map);
+            
+            
+            var wiencenter = {
+                type: "Feature",
+                geometry: {
+                type: "Point",
+                coordinates: [16.370766,48.196857]
+            },
+            properties: {
+                name: "Wien Center"
+            }
+            };
+            
+            //var walkingDistance = turf.circle(wiencenter.geometry.coordinates, 80); // km
+            //L.geoJson(walkingDistance).addTo(map);
+            
+            var point = turf.point([16.370766,48.196857]);
+            var buffered = turf.buffer(point, 80, {units: 'kilometers'});
+            //L.geoJson(buffered).addTo(map);
+
+        </script>
+    </body>
+</html>
